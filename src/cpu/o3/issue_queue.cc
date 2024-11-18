@@ -40,7 +40,7 @@ bool
 IssueQue::compare_priority::operator()(const DynInstPtr& a, const DynInstPtr& b) const
 {
     return a->seqNum > b->seqNum;
-}
+}               // 比较指令的seqNum，这里的">"被重载了，比较的是指令的优先顺序
 
 void
 IssueQue::IssueStream::push(const DynInstPtr& inst)
@@ -54,7 +54,7 @@ IssueQue::IssueStream::pop()
 {
     assert(size > 0);
     return insts[--size];
-}
+}                            // IssueStream是发射队列的一个缓冲区
 
 IssueQue::IssueQueStats::IssueQueStats(statistics::Group* parent, IssueQue* que, std::string name)
     : Group(parent, name.c_str()),
@@ -85,7 +85,7 @@ IssueQue::IssueQue(const IssueQueParams &params)
       inflightIssues(scheduleToExecDelay, 0)
 {
     toIssue = inflightIssues.getWire(0);
-    toFu = inflightIssues.getWire(-scheduleToExecDelay);
+    toFu = inflightIssues.getWire(-scheduleToExecDelay);      // 这里模拟了流水线的内部延迟，延迟为scheduleToExecDelay
 }
 
 void
@@ -100,7 +100,7 @@ void
 IssueQue::resetDepGraph(int numPhysRegs)
 {
     subDepGraph.resize(numPhysRegs);
-}
+}                                        // 重置依赖关系图，大小为物理寄存器个数，每个subDeqGraph[i]记录了依赖此物理寄存器的指令
 
 void
 IssueQue::checkScoreboard(const DynInstPtr& inst)
@@ -117,8 +117,8 @@ IssueQue::checkScoreboard(const DynInstPtr& inst)
                   dst_inst->genDisassembly());
         }
     }
-    inst->checkOldVdElim();
-}
+    // inst->checkOldVdElim();
+}                                     // 检查每一条指令的源操作数对应的计分板，以及其是否可以通过旁路获得
 
 void
 IssueQue::addToFu(const DynInstPtr& inst)
@@ -136,7 +136,7 @@ IssueQue::addToFu(const DynInstPtr& inst)
 void
 IssueQue::issueToFu()
 {
-    int size = toFu->size;
+    int size = toFu->size;                                   // 获取准备好且等待发射的指令
     for (int i=0; i<size;i++) {
         auto inst = toFu->pop();
         if (!inst) {
@@ -145,7 +145,7 @@ IssueQue::issueToFu()
         checkScoreboard(inst);
         addToFu(inst);
         if (scheduler->getCorrectedOpLat(inst) > 1) {
-            scheduler->wakeUpDependents(inst, this);
+            scheduler->wakeUpDependents(inst, this);         // 唤醒依赖于该指令的后续指令
         }
     }
 }
@@ -153,12 +153,12 @@ IssueQue::issueToFu()
 void
 IssueQue::retryMem(const DynInstPtr& inst)
 {
-    assert(!inst->isNonSpeculative());
+    assert(!inst->isNonSpeculative());                       // 非推测执行指令无需重试
     iqstats->retryMem++;
     DPRINTF(Schedule, "retry %s [sn %lu]\n", enums::OpClassStrings[inst->opClass()], inst->seqNum);
     // scheduler->loadCancel(inst);
     scheduler->addToFU(inst);
-}
+}                                                            // 这个函数用于重试retry的内存相关的指令
 
 void
 IssueQue::markMemDepDone(const DynInstPtr& inst)
@@ -167,18 +167,18 @@ IssueQue::markMemDepDone(const DynInstPtr& inst)
     DPRINTF(Schedule, "[sn %lu] has solved memdependency\n", inst->seqNum);
     inst->setMemDepDone();
     addIfReady(inst);
-}
+}                                                            // 设置内存依赖解决并添加到发射队列当中
 
 void
 IssueQue::wakeUpDependents(const DynInstPtr& inst, bool speculative)
 {
     if (speculative && inst->canceled()) {
-        return;
+        return;                                             // 如果推测执行指令被取消，则不进行唤醒操作
     }
     for (int i = 0; i < inst->numDestRegs(); i++) {
         PhysRegIdPtr dst = inst->renamedDestIdx(i);
         if (dst->isFixedMapping() || dst->getNumPinnedWritesToComplete() != 1) {
-            continue;;
+            continue;;                                      // 检测指令的目的寄存器是否为不用于映射的寄存器，如零寄存器或是否还有多个未完成的写该目的寄存器的操作
         }
 
         DPRINTF(Schedule, "was %s woken by p%lu [sn %lu]\n",
@@ -187,20 +187,20 @@ IssueQue::wakeUpDependents(const DynInstPtr& inst, bool speculative)
             int srcIdx = it.first;
             auto consumer = it.second;
             if (consumer->readySrcIdx(srcIdx)) {
-                continue;
+                continue;                                  // 唤醒该目的寄存器的消费者
             }
             consumer->markSrcRegReady(srcIdx);
 
-            if (!speculative && consumer->srcRegIdx(srcIdx) == RiscvISA::VecRenamedVLReg) {
-                consumer->checkOldVdElim();
-            }
+            //if (!speculative && consumer->srcRegIdx(srcIdx) == RiscvISA::VecRenamedVLReg) {
+                //consumer->checkOldVdElim();
+            //}
 
             DPRINTF(Schedule, "[sn %lu] src%d was woken\n", consumer->seqNum, srcIdx);
             addIfReady(consumer);
         }
 
         if (!speculative) {
-            subDepGraph[dst->flatIndex()].clear();
+            subDepGraph[dst->flatIndex()].clear();         // 由于推测执行可能会由于推测失效进行回滚，故依赖信息要保留
         }
     }
 }
@@ -210,7 +210,7 @@ IssueQue::addIfReady(const DynInstPtr& inst)
 {
     if (inst->readyToIssue()) {
         if (inst->readyTick == -1) {
-            inst->readyTick = curTick();
+            inst->readyTick = curTick();                  // 设置指令发射的时间戳为当前时间
             DPRINTF(Counters, "set readyTick at addIfReady\n");
         }
 
@@ -231,7 +231,7 @@ IssueQue::addIfReady(const DynInstPtr& inst)
             readyInsts.push(inst);
         }
     }
-}
+}                                                       // 选出发射队列中已经准备好发射的指令
 
 void
 IssueQue::selectInst()
@@ -245,7 +245,7 @@ IssueQue::selectInst()
             continue;
         }
         DPRINTF(Schedule, "[sn %ld] was selected\n", inst->seqNum);
-        scheduler->insertSlot(inst);
+        scheduler->insertSlot(inst);                     // 将指令放入调度槽，其中向量和浮点指令不参与
         selectedInst.push_back(inst);
         readyInsts.pop();
     }
@@ -334,7 +334,7 @@ IssueQue::insert(const DynInstPtr& inst)
         }
     }
 
-    inst->checkOldVdElim();
+    //inst->checkOldVdElim();
 
     if (!addToDepGraph) {
         assert(inst->readyToIssue());
@@ -705,7 +705,7 @@ Scheduler::insertSlot(const DynInstPtr& inst)
     slotOccupied += needed;
     intSlot.push(Slot(priority, needed, inst));
     DPRINTF(Schedule, "[sn %lu] insert slot, priority: %u, needed: %u\n", inst->seqNum, priority, needed);
-}
+}      // 将指令插入调度槽，根据优先级进行仲裁，浮点和向量指令不参与
 
 void Scheduler::loadCancel(const DynInstPtr& inst)
 {

@@ -152,7 +152,7 @@ class CDP : public Queued
     ~CDP()
     {
         // Delete the pfLRUFilter pointer to release memory
-        Queued::~Queued();
+        //Queued::~Queued();
         delete pfLRUFilter;
     }
 

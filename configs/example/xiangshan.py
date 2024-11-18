@@ -23,6 +23,15 @@ from common import XSConfig
 from common.Caches import *
 from common import Options
 
+from m5.SimObject import SimObject
+from m5.params import *
+from m5.objects.FuncUnit import *
+from m5.objects.FuncUnitConfig import *
+
+from MyConfig import *
+
+
+
 def build_test_system(np):
     assert buildEnv['TARGET_ISA'] == "riscv"
     ruby = False
@@ -267,21 +276,24 @@ if '--ruby' in sys.argv:
 args = parser.parse_args()
 
 args.xiangshan_system = True
-args.enable_difftest = True
+args.enable_difftest = False
 args.enable_riscv_vector = True
 
 assert not args.external_memory_system
 
 test_mem_mode = 'timing'
 
+
 # override cpu class and clock
 if args.xiangshan_ecore:
-    TestCPUClass = XiangshanECore
+    TestCPUClass = XiangshanECore(scheduler = MyScheduler())
     FutureClass = None
     args.cpu_clock = '2.4GHz'
 else:
-    TestCPUClass = XiangshanCore
+    TestCPUClass = XiangshanCore(scheduler = MyScheduler())
     FutureClass = None
+    args.cpu_clock = '3GHz'
+
 
 # Match the memories with the CPUs, based on the options for the test system
 TestMemClass = Simulation.setMemClass(args)

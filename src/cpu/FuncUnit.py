@@ -76,7 +76,10 @@ class OpClass(Enum):
 
             'VectorIntegerArith', 'VectorFloatArith', 'VectorFloatConvert',
             'VectorIntegerReduce', 'VectorFloatReduce',
-            'VectorMisc', 'VectorIntegerExtension', 'VectorConfig'
+            'VectorMisc', 'VectorIntegerExtension', 'VectorConfig',
+
+            ## XS-RTL FU:
+            'vialuFix', 'vimac', 'vipu', 'vppu', 'vidiv', 'vfalu', 'vfma', 'vfdiv', 'vfcvt'
             ]
 
 class OpDesc(SimObject):
