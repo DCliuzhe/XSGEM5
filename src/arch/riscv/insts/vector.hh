@@ -556,7 +556,7 @@ class VMaskMergeMicroInst : public VectorArithMicroInst
     VMaskMergeMicroInst(ExtMachInst extMachInst, uint8_t _dstReg,
         uint8_t _numSrcs)
         : VectorArithMicroInst("vmask_mv_micro", extMachInst,
-          VectorIntegerArithOp, 0)
+          vialuFixOp, 0)
     {
         setRegIdxArrays(
             reinterpret_cast<RegIdArrayPtr>(
@@ -628,7 +628,7 @@ class VxsatMicroInst : public VectorArithMicroInst
   public:
     VxsatMicroInst(bool* Vxsat, ExtMachInst extMachInst)
         : VectorArithMicroInst("vxsat_micro", extMachInst,
-          VectorIntegerArithOp, 0)
+          vialuFixOp, 0)
     {
         vxsat = Vxsat;
     }
@@ -660,7 +660,7 @@ private:
   public:
     VCompressPopcMicroInst(ExtMachInst extMachInst)
         : VectorArithMicroInst("VPopCount", extMachInst,
-          VectorIntegerArithOp, 0)
+          vialuFixOp, 0)
     {
         setRegIdxArrays(reinterpret_cast<RegIdArrayPtr>(
             &std::remove_pointer_t<decltype(this)>::srcRegIdxArr),
@@ -731,7 +731,7 @@ class VCompressMicroInst : public VectorArithMicroInst
     VCompressMicroInst(ExtMachInst extMachInst,
         uint8_t microIdx, uint8_t _vsIdx, uint8_t _vdIdx)
         : VectorArithMicroInst("Vcompress_micro", extMachInst,
-          VectorIntegerArithOp, microIdx)
+          vppuOp, microIdx)
         , vsIdx(_vsIdx), vdIdx(_vdIdx)
     {
         setRegIdxArrays(
@@ -839,7 +839,7 @@ class Vcompress_vm : public VectorArithMacroInst
     RegId destRegIdxArr[1]; // vd
   public:
     Vcompress_vm(ExtMachInst _machInst)
-        : VectorArithMacroInst("vcompress_vm", _machInst, VectorIntegerArithOp)
+        : VectorArithMacroInst("vcompress_vm", _machInst, vppuOp)
     {
         const uint32_t num_microops = vflmul < 1 ? 1 : vflmul;
         const int32_t vlmax = VLEN / sew * vflmul;

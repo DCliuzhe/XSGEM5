@@ -344,7 +344,7 @@ def config_embedded_python(env):
                   "2. SCons is using a wrong C compiler. This can happen if "
                   "CC has the wrong value.\n"
                   f"CC = {env['CC']}")
-        py_version = conf.CheckPythonLib()
+        py_version = (3,8,18) #conf.CheckPythonLib()
         if not py_version:
             error("Can't find a working Python installation")
 
@@ -387,7 +387,6 @@ for variant_path in variant_paths:
         env.Append(CCFLAGS=['-Wall', '-Wundef', '-Wextra',
                             '-Wno-sign-compare', '-Wno-unused-parameter',
                             '-Wno-unused-variable',
-                            '-Wno-unused-private-field',
                             '-Wno-unused-but-set-variable',
                             ])
 

@@ -140,6 +140,16 @@ static const OpClass VectorIntegerExtensionOp = enums::VectorIntegerExtension;
 static const OpClass VectorConfigOp = enums::VectorConfig;
 static const OpClass Num_OpClasses = enums::Num_OpClass;
 
+static const OpClass vialuFixOp = enums::vialuFix;
+static const OpClass vimacOp = enums::vimac;
+static const OpClass vipuOp = enums::vipu;
+static const OpClass vppuOp = enums::vppu;
+static const OpClass vidivOp = enums::vidiv;
+static const OpClass vfaluOp = enums::vfalu;
+static const OpClass vfmaOp = enums::vfma;
+static const OpClass vfdivOp = enums::vfdiv;
+static const OpClass vfcvtOp = enums::vfcvt;
+
 } // namespace gem5
 
 #endif // __CPU__OP_CLASS_HH__
